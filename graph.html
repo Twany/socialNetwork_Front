@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+<head>
+    <meta charset="utf-8">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@5.0.1/dist/echarts.min.js"></script>
+    <script src="https://cdn.staticfile.org/jquery/1.10.2/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css" integrity="sha384-B0vP5xmATw1+K9KRQjQERJvTumQW0nPEzvF6L/Z6nronJ3oUOFUFpCjEUQouq2+l" crossorigin="anonymous">
+
+   
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-LCPyFKQyML7mqtS+4XytolfqyqSlcbB3bvDuH9vX2sdQMxRonb/M3b9EmhCNNNrV" crossorigin="anonymous"></script>
+</head>
+<body style="height: 99%; width: 98%;margin: 0;background-color: #ECF0F5;">
+
+    <div id="main" style="width: 100%;height: 100%;"></div>
+
+    <!-- 右下角提示栏 -->
+    <div role="alert" aria-live="assertive" aria-atomic="true" class="toast" data-autohide="false" style="position: absolute;bottom: 10px;right: 10px;opacity:100;width: 300px;height: 150px;">
+        <div class="toast-header">
+          <!-- <img src="..." class="rounded mr-2" alt="..."> -->
+          <strong class="mr-auto">Tips</strong>
+          <small></small>
+          <button type="button" class="ml-2 mb-1 close" data-dismiss="toast" aria-label="Close" onclick="close()">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="toast-body" style="padding-top: 20px;">
+            
+            💥 双击空白区域可切换视图
+            <br><br>
+            💥 提供 `力引导布局`/`环形布局` 布局方式
+        </div>
+      </div>
+    <!-- Uncomment this line if you want to dataTool extension
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@5.0.1/dist/extension/dataTool.min.js"></script>
+    -->
+    <!-- Uncomment this line if you want to echarts-stat extension
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts-stat@latest/dist/ecStat.min.js"></script>
+    -->
+    <!-- Uncomment this line if you want to use map
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@5.0.1/map/js/china.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@5.0.1/map/js/world.js"></script>
+    -->
+    <!-- Uncomment these two lines if you want to use bmap extension
+    <script type="text/javascript" src="https://api.map.baidu.com/api?v=2.0&ak=<Your Key Here>"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@5.0.1/dist/extension/bmap.min.js"></script>
+    -->
+
+</body>
+    
+</html>
+<script>
+// import * as echarts from 'echarts';
+//var ROOT_PATH = 'https://cdn.jsdelivr.net/gh/apache/echarts-website@asf-site/examples';
+
+var chartDom = document.getElementById('main');
+var myChart = echarts.init(chartDom);
+var option;
+
+myChart.showLoading();
+$.get('/data1.json', function (graph) {
+    myChart.hideLoading();
+    graph.nodes.forEach(function (node) {
+        //node.symbolSize = 15;  //节点的默认全部，否则按照json中的
+    });
+    option = {
+        title: {
+            text: '红楼梦人物关系总览',
+            subtext: 'By Yyk.',
+            top: 'top',
+            left: 'right'
+        },
+        toolbox: {
+            show: true,
+            orient: 'vertical',
+            left:50,
+            top: 350,
+            feature: {
+                restore: {},
+                saveAsImage: {}
+            }
+        }
+        ,
+        legend: [{ //分类栏
+            //selectedMode: 'single',
+            data: graph.categories.map(function (a) {
+                return a.name;
+            }),
+            left: '2%',
+            top: '2%',
+            orient: 'vertical'
+        }],
+        animationDuration: 2500,
+        animationEasingUpdate: 'quadraticIn',
+        animationDuration: function (idx) {
+            // 越往后的数据时长越大
+            return idx * 100;
+        },
+        animationEasing: 'quadraticIn',
+        series: [ //本图只有此一个系列，所有只在这里操作
+            {
+                //name: '红楼梦人物关系总览',
+                type: 'graph',
+                layout: 'circular',
+                value: 30,
+                data: graph.nodes,
+                links: graph.links,
+                categories: graph.categories,
+                roam: true,
+                draggable:true,
+                legendHoverLink:true,
+                symbolSize: 50,  //节点大小
+                lineStyle: {     //关系配置
+                    color: 'source',
+                    curveness: 0.2
+                },
+                edgeSymbol : ['circle', 'arrow'], //边的指向，用默认的直线，不用箭头
+                label: {
+                    position: 'right'
+                },
+                force: {
+                    initLayout:'circular',
+                    layoutAnimation : true,
+                    gravity : 0, //引力因子，值越大越往中心靠
+                    repulsion: 500, //斥力因子，和edgeLength 一块决定距离
+                    //edgeLength: graph.links.value,  //边的距离，用数，比如 [10,50]，lim小= 10；lim大= 50
+                    //edgeLength:100,
+                    friction :0.1
+                },
+                emphasis: {
+                    focus: 'adjacency', //聚焦关系图中的邻接点和边的图形
+                    blurScope: 'series',
+                    lineStyle: {
+                        width: 10
+                    },
+                    edgeLabel:{ //选中显示关系
+                        show: true
+                    } 
+                },
+                label: { //节点标签
+                    show: true
+                },
+                edgeLabel: { //关系标签
+                    show: true,
+                    formatter: function (params) {  //格式化关系标签显示 -》 父亲
+                        //console.log(params.data.value)
+                        // do some thing
+                        return  params.data.value
+                    }
+                }
+                //关系的标签在 json中设置
+            }
+        ]
+    };
+
+    myChart.setOption(option);
+
+        //双击空白区域切换视图
+        myChart.getZr().on('dblclick', function (event) {
+        // 没有 target 意味着鼠标/指针不在任何一个图形元素上，它是从“空白处”触发的。
+        if (!event.target) {
+            // 点击在了空白处，做些什么。
+            //console.log(event)
+            //console.log(option.series[0].layout)  //可以用到全局的mychart变量
+
+            //探测图的类型，实现circular和force类型的互换
+            if (option.series[0].layout == "circular"){
+                option.series[0].layout = "force"
+            }else{
+                option.series[0].layout = "circular"
+            }
+            
+            //设置完之后，记得再设置
+            //因为他不像Vue 是全局绑定的
+            option && myChart.setOption(option);
+        }
+    });
+});
+
+option && myChart.setOption(option);
+
+
+</script>
+
+<!-- 右下角提示按钮 关闭 -->
+<script>
+  $(document).ready(function(){
+  $(".close").click(function(){
+      $(".toast").hide()
+  });
+});
+</script>
